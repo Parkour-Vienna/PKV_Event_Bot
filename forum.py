@@ -32,7 +32,7 @@ class Forum(object):
                 result_list = [entry for entry in topics if
                                entry['id'] in new_topic_ids and DP.parse(entry.get('created_at')) > DP.parse(
                                    old_topics[0].get('created_at'))]
-            except KeyError:
+            except (KeyError, IndexError):
                 logging.info('no old_topics found')
                 result_list = []
         else:
