@@ -3,6 +3,8 @@ import urllib
 import dateutil.parser as DP
 import requests
 import json
+from helper import open_file, write_file
+
 
 class Forum(object):
     def __init__(self, url, username, key):
@@ -17,15 +19,22 @@ class Forum(object):
             'X-Requested-With': 'XMLHttpRequest'
         }
 
-    def compare_topics(self, cat_id, *args, filename = 'topic_5.json'):
-        result_list = []
-        topics = [{', '.join(map(str, name)): self._rec_get(dic,list(name)) for name in args} for dic in self._get_latest_topics(cat_id)['topic_list']['topics'] if
+    def compare_topics(self, cat_id, *args, filename='topic_5.json'):
+        logging.info('building list of newest topics')
+        topics = [{', '.join(map(str, name)): self._rec_get(dic, list(name)) for name in args} for dic in
+                  self._get_latest_topics(cat_id)['topic_list']['topics'] if
                   dic['pinned'] is False][:10]
-        old_topics = self._open_file(filename)
-        self._write_file(filename, topics)
+        old_topics = open_file(filename)
+        write_file(filename, topics)
         new_topic_ids = {i['id'] for i in topics} - {i['id'] for i in old_topics}
         if new_topic_ids:
-            result_list = [entry for entry in topics if entry['id'] in new_topic_ids and DP.parse(entry.get('created_at')) > DP.parse(old_topics[0].get('created_at'))]
+            try:
+                result_list = [entry for entry in topics if
+                               entry['id'] in new_topic_ids and DP.parse(entry.get('created_at')) > DP.parse(
+                                   old_topics[0].get('created_at'))]
+            except KeyError:
+                logging.info('no old_topics found')
+                result_list = [entry for entry in topics if entry['id'] in new_topic_ids]
         else:
             result_list = []
         return result_list
@@ -107,25 +116,11 @@ class Forum(object):
 
     def close_topic(self, topic_id):
         self._put(f'/t/{topic_id}/status', {'status': 'closed', 'enabled': 'true'})
-        
-    def _open_file(self, filename):
-        result_dict = {}
-        try:
-            with open(filename, "r") as file:
-                result_dict = json.load(file)
-        except FileNotFoundError:
-            with open(filename, "w") as file:
-                result_dict = {} 
-        return result_dict
-        
-    def _write_file(self, filename, dump):
-        with open(filename, "w") as file:
-            json.dump(dump, file)
-        
-    def _rec_get(self, name, keys): 
-        head, *tail = keys 
+
+    def _rec_get(self, name, keys):
+        head, *tail = keys
         return self._rec_get(name.get(head, {}), tail) if tail else name.get(head, "")
-    
+
     def _get_latest_topics(self, category_id):
         return self._get("/c/{0}.json".format(category_id))
 
