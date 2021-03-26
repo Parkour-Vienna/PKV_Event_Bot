@@ -141,6 +141,19 @@ def votes(update, context):
             message2 = "No votes for next FM :( \n"
         context.bot.send_message(chat_id=update.effective_chat.id, text=message + message2)
 
+def spotmap(update, context):
+    if check_args(update, context, "/spotmap", [], operator.ne, len(context.args)):
+        message = "https://parkourvienna.at/map"
+        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+
+def forum(update, context):
+        message = "https://parkourvienna.at/"
+        if len(context.args) == 0:
+            message += "categories"
+        else:
+            message += "search?q=" + "%20".join(context.args)
+        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+
 def main():
     updater = Updater('1634462832:AAEUuVYbbfQ47VrcximEFkMlBp9HF1a9xog')
     dp = updater.dispatcher
@@ -148,9 +161,11 @@ def main():
     dp.add_handler(CommandHandler('tomorrowtraining', tomorrowtraining))
     dp.add_handler(CommandHandler('whotraining', whotraining))
     dp.add_handler(CommandHandler('notraining', notraining))
-    dp.add_handler(CommandHandler('help', help))
+    dp.add_handler(CommandHandler(['help','man','manual'], help))
     dp.add_handler(CommandHandler('vote', vote))
     dp.add_handler(CommandHandler('votes', votes))
+    dp.add_handler(CommandHandler('forum', forum))
+    dp.add_handler(CommandHandler(['spotmap','spots'], spotmap))
     updater.start_polling()
     updater.idle()
 
