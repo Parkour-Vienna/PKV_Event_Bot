@@ -7,4 +7,5 @@ Im Moment baut der check noch auf einem cronjob auf, der jede Minute auszuführe
 Mit der Bridge vom Dominik ist der WhatsApp part vielleicht eh obsolet, die nächsten Schritte wären:
 
 -> Automatisch ChatID beziehen sobald der Bot einer Gruppe hinzugefügt wird
+
 -> Commands implementieren
