@@ -6,6 +6,7 @@ import logging
 import dateutil.parser as DP
 
 dest = "whatsapp"
+bot_token, bot_chatID = '1634462832:AAEUuVYbbfQ47VrcximEFkMlBp9HF1a9xog', '-550704351'
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
@@ -20,7 +21,7 @@ if __name__ == '__main__':
         logging.info(str(len(dif)) + 'new topics found, iterating through')
         for item in dif:
             tag_txt = start_txt = ""
-            bot_token, bot_chatID = '1634462832:AAEUuVYbbfQ47VrcximEFkMlBp9HF1a9xog', '-550704351'
+            
             if len(item['excerpt']) == 100:
                 item['excerpt'] = item['excerpt'][:97] + "..."
             if item['tags']:
