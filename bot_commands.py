@@ -81,7 +81,7 @@ def tomorrowtraining(update, context):
             write_file(str(date.today() + timedelta(days=1)) + ".train", ppl_training)
 
 
-def help(update, context):
+def help_me(update, context):
     message = "Currently supported functions: \n" \
               "   /training [TIME] [LOCATION] \n" \
               "   /whotraining \n" \
@@ -161,7 +161,7 @@ def main():
     dp.add_handler(CommandHandler('tomorrowtraining', tomorrowtraining))
     dp.add_handler(CommandHandler('whotraining', whotraining))
     dp.add_handler(CommandHandler('notraining', notraining))
-    dp.add_handler(CommandHandler(['help', 'man', 'manual'], help))
+    dp.add_handler(CommandHandler(['help', 'man', 'manual'], help_me))
     dp.add_handler(CommandHandler('vote', vote))
     dp.add_handler(CommandHandler('votes', votes))
     dp.add_handler(CommandHandler('forum', forum))
