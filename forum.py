@@ -34,7 +34,7 @@ class Forum(object):
                                    old_topics[0].get('created_at'))]
             except KeyError:
                 logging.info('no old_topics found')
-                result_list = [entry for entry in topics if entry['id'] in new_topic_ids]
+                result_list = []
         else:
             result_list = []
         return result_list

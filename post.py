@@ -26,7 +26,7 @@ if __name__ == '__main__':
         else:
             message = "No votes from Chats for this FM :( \n"
 
-    if todayday == 4:
+    if todayday == 6:
         votes_fm = open_file("fm.train")
         if votes_fm:
             message = "Votes for this FM:\n"
@@ -35,6 +35,6 @@ if __name__ == '__main__':
         else:
             message = "No votes from Chats for this FM :( \n"
 
-    if todayday == 2 or todayday == 4:
+    if todayday == 2 or todayday == 6:
         logging.info('making post')
         f.create_post(839, message)
