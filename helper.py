@@ -5,7 +5,7 @@ import operator
 
 def open_file(filename):
     try:
-        with open(filename, "r") as file:
+        with open("data/" + filename, "r") as file:
             result = json.load(file)
     except FileNotFoundError:
         result = []
@@ -13,7 +13,7 @@ def open_file(filename):
 
 
 def write_file(filename, dump):
-    with open(filename, "w+") as file:
+    with open("data/" + filename, "w+") as file:
         json.dump(dump, file)
 
 
@@ -28,4 +28,4 @@ def check_args(update, context, name, args_needed, relation, args_given):
 
 def rec_get(name, keys):
     head, *tail = keys
-    return self._rec_get(name.get(head, {}), tail) if tail else name.get(head, "")
+    return rec_get(name.get(head, {}), tail) if tail else name.get(head, "")
