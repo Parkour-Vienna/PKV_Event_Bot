@@ -4,7 +4,6 @@ import dateutil.parser as DP
 import requests
 import json
 
-
 class Forum(object):
     def __init__(self, url, username, key):
         self.url = url
@@ -18,27 +17,18 @@ class Forum(object):
             'X-Requested-With': 'XMLHttpRequest'
         }
 
-    def compare_topics(self, cat_id):
-        topics = [{'id': i['id'], 'slug': i['slug'], 'excerpt': i['excerpt'][:100], 'tags': i['tags'],
-                   'created_at': i['created_at'], 'title': i['title']} for i in self._get_latest_topics(cat_id)['topic_list']['topics'] if
-                  i['pinned'] is False][:10]
-        topics_id = {i['id'] for i in topics}
-        try:
-            with open('topic_' + str(cat_id) + ".txt", "r") as file:
-                old_topics = json.load(file)
-        except FileNotFoundError:
-            with open('topic_' + str(cat_id) + ".txt", "w") as file:
-                old_topics = {}
-        old_topics_id = {i['id'] for i in old_topics}
-        with open('topic_' + str(cat_id) + ".txt", "w") as file:
-            json.dump(topics, file)
-        if topics_id != old_topics_id and old_topics:
-            new_topic_ids = topics_id - old_topics_id
-            return [entry for entry in topics if
-                    entry['id'] in new_topic_ids and DP.parse(entry['created_at']) > DP.parse(
-                        old_topics[0]['created_at'])]
+    def compare_topics(self, cat_id, *args, filename = 'topic_5.json'):
+        result_list = []
+        topics = [{', '.join(map(str, name)): self._rec_get(dic,list(name)) for name in args} for dic in self._get_latest_topics(cat_id)['topic_list']['topics'] if
+                  dic['pinned'] is False][:10]
+        old_topics = self._open_file(filename)
+        self._write_file(filename, topics)
+        new_topic_ids = {i['id'] for i in topics} - {i['id'] for i in old_topics}
+        if new_topic_ids:
+            result_list = [entry for entry in topics if entry['id'] in new_topic_ids and DP.parse(entry.get('created_at')) > DP.parse(old_topics[0].get('created_at'))]
         else:
-            return []
+            result_list = []
+        return result_list
 
     def check_connection(self):
         resp = requests.get(url=self.url + '/categories.json', headers=self.header)
@@ -117,7 +107,25 @@ class Forum(object):
 
     def close_topic(self, topic_id):
         self._put(f'/t/{topic_id}/status', {'status': 'closed', 'enabled': 'true'})
-
+        
+    def _open_file(self, filename):
+        result_dict = {}
+        try:
+            with open(filename, "r") as file:
+                result_dict = json.load(file)
+        except FileNotFoundError:
+            with open(filename, "w") as file:
+                result_dict = {} 
+        return result_dict
+        
+    def _write_file(self, filename, dump):
+        with open(filename, "w") as file:
+            json.dump(dump, file)
+        
+    def _rec_get(self, name, keys): 
+        head, *tail = keys 
+        return self._rec_get(name.get(head, {}), tail) if tail else name.get(head, "")
+    
     def _get_latest_topics(self, category_id):
         return self._get("/c/{0}.json".format(category_id))
 
