@@ -24,3 +24,8 @@ def check_args(update, context, name, args_needed, relation, args_given):
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
         return True
+
+
+def rec_get(name, keys):
+    head, *tail = keys
+    return self._rec_get(name.get(head, {}), tail) if tail else name.get(head, "")

@@ -3,7 +3,7 @@ import urllib
 import dateutil.parser as DP
 import requests
 import json
-from helper import open_file, write_file
+from helper import open_file, write_file, rec_get
 
 
 class Forum(object):
@@ -21,8 +21,8 @@ class Forum(object):
 
     def compare_topics(self, cat_id, *args, filename='topic_5.json'):
         logging.info('building list of newest topics')
-        topics = [{', '.join(map(str, name)): self._rec_get(dic, list(name)) for name in args} for dic in
-                  self._get_latest_topics(cat_id)['topic_list']['topics'] if
+        topics = [{', '.join(map(str, name)): rec_get(dic, list(name)) for name in args} for dic in
+                  self.get_latest_topics(cat_id)['topic_list']['topics'] if
                   dic['pinned'] is False][:10]
         old_topics = open_file(filename)
         write_file(filename, topics)
@@ -117,11 +117,7 @@ class Forum(object):
     def close_topic(self, topic_id):
         self._put(f'/t/{topic_id}/status', {'status': 'closed', 'enabled': 'true'})
 
-    def _rec_get(self, name, keys):
-        head, *tail = keys
-        return self._rec_get(name.get(head, {}), tail) if tail else name.get(head, "")
-
-    def _get_latest_topics(self, category_id):
+    def get_latest_topics(self, category_id):
         return self._get("/c/{0}.json".format(category_id))
 
     def _put(self, url, data={}):
