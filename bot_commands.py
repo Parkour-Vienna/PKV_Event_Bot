@@ -1,4 +1,5 @@
-from telegram.ext import Updater, CommandHandler
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 import requests
 import json
 import logging
@@ -10,7 +11,7 @@ from settings import bot_settings
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
-
+'''
 def training(update, context):
     ppl_training = open_file(str(date.today()) + ".train")
     if check_args(update, context, "/training", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
@@ -26,7 +27,7 @@ def training(update, context):
             context.bot.send_message(chat_id=update.effective_chat.id, text=message)
             ppl_training.append({'who': user.first_name, 'where': str(loc).capitalize(), 'when': str(timestamp)})
             write_file(str(date.today()) + ".train", ppl_training)
-
+'''
 
 def whotraining(update, context):
     if check_args(update, context, "/whotraining", ["[DAY]"], operator.gt, len(context.args)):
@@ -48,10 +49,24 @@ def whotraining(update, context):
 
 
 def notraining(update, context):
-    if check_args(update, context, "/notraining", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
-        ppl_training = open_file(str(date.today()) + ".train")
+    ppl_training = open_file(str(date.today()) + ".train")
+    user = update.message.from_user
+    if len(context.args) == 0:
+        user_trainings = [item for item in ppl_training if item['who'] == user.first_name]
+        if len(user_trainings) > 1:
+            message = "You have multiple Trainings planned. Please specify which one you want to delete."
+        elif len(user_trainings) == 1:
+            message = str(user.first_name) + " is no longer training @" + str(user_trainings[0]['where']).capitalize() \
+                      + ", " + str(user_trainings[0]['when']) + " :("
+            ppl_training.remove(user_trainings[0])
+        else:
+            message = "You have no training planned today. If you want to cancel a training tomorrow, you have to " \
+                      "specify it manually. "
+        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+        write_file(str(date.today()) + ".train", ppl_training)
+    elif check_args(update, context, "/notraining", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
         loc, timestamp = " ".join(context.args[1:]), context.args[0]
-        user = update.message.from_user
+
         try:
             datetime.strptime(str(timestamp), '%H:%M')
         except ValueError:
@@ -65,8 +80,8 @@ def notraining(update, context):
             write_file(str(date.today()) + ".train", ppl_training)
 
 
-def tomorrowtraining(update, context):
-    if check_args(update, context, "/tomorrowtraining", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
+def notomorrowtraining(update, context):
+    if check_args(update, context, "/notomorrowtraining", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
         ppl_training = open_file(str(date.today() + timedelta(days=1)) + ".train")
         loc, timestamp = " ".join(context.args[1:]), context.args[0]
         user = update.message.from_user
@@ -76,9 +91,10 @@ def tomorrowtraining(update, context):
             message = "Please specify time in the format HH:MM"
             context.bot.send_message(chat_id=update.effective_chat.id, text=message)
         else:
-            message = str(user.first_name) + " is training tomorrow @" + str(loc).capitalize() + ", " + str(timestamp)
+            message = str(user.first_name) + " is no longer training @" + str(loc).capitalize() + ", " + str(
+                timestamp) + " :("
             context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-            ppl_training.append({'who': user.first_name, 'where': str(loc).capitalize(), 'when': str(timestamp)})
+            ppl_training.remove({'who': user.first_name, 'where': str(loc).capitalize(), 'when': str(timestamp)})
             write_file(str(date.today() + timedelta(days=1)) + ".train", ppl_training)
 
 
@@ -86,13 +102,42 @@ def help_me(update, context):
     message = "Currently supported functions: \n" \
               "   /training [TIME] [LOCATION] \n" \
               "   /whotraining \n" \
+              "   /nexttraining \n" \
               "   /notraining [TIME] [LOCATION] \n" \
               "   /tomorrowtraining [TIME] [LOCATION] \n" \
+              "   /notomorrowtraining [TIME] [LOCATION] \n" \
               "   /vote [EVENT] [LOCATION] \n" \
               "   /votes \n" \
               "   /spots \n" \
               "   /forum [SEARCH TERMS]"
     context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+
+
+def nexttraining(update, context):
+    if check_args(update, context, "/nexttraining", [], operator.ne, len(context.args)):
+        message = ""
+        ppl_training = open_file(str(date.today()) + ".train")
+        now = datetime.now()
+        now_hhmm_s = str(now.hour).rjust(2, "0") + ":" + str(now.minute).rjust(2, "0")
+        now_hhmm = datetime.strptime(now_hhmm_s, '%H:%M')
+        if ppl_training:
+            next_time = min([datetime.strptime(item['when'], '%H:%M') for item in ppl_training])
+            next_time_s = str(next_time.hour) + ":" + str(next_time.minute).rjust(2, "0")
+            if next_time.time() > now_hhmm.time():
+                next_training = next(item for item in ppl_training if item['when'] == str(next_time_s))
+                message = "Next training is @" + next_training['where'] + " at " + next_training['when'] + " with " \
+                          + next_training['who']
+        if not message:
+            ppl_training_tm = open_file(str(date.today() + timedelta(days=1)) + ".train")
+            if ppl_training_tm:
+                next_time = min([datetime.strptime(item['when'], '%H:%M') for item in ppl_training_tm])
+                next_time_s = str(next_time.hour) + ":" + str(next_time.minute).rjust(2, "0")
+                next_training = next(item for item in ppl_training_tm if item['when'] == str(next_time_s))
+                message = "Next training is tomorrow @" + next_training['where'] + " at " + next_training[
+                    'when'] + " with " + next_training['who']
+        if not message:
+            message = "There are no trainings left today or tomorrow :("
+        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 def vote(update, context):
@@ -155,18 +200,81 @@ def forum(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
+
+def tomorrowtraining(update, context):
+    if check_args(update, context, "/tomorrowtraining", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
+        ppl_training = open_file(str(date.today() + timedelta(days=1)) + ".train")
+        loc, timestamp = " ".join(context.args[1:]), context.args[0]
+        user = update.message.from_user
+        try:
+            datetime.strptime(str(timestamp), '%H:%M')
+        except ValueError:
+            message = "Please specify time in the format HH:MM"
+            context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+        else:
+            message = str(user.first_name) + " is training tomorrow @" + str(loc).capitalize() + ", " + str(timestamp)
+            keyboard = [[InlineKeyboardButton("Join", callback_data=str(user.first_name))]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=reply_markup)
+            this_training = {'who': user.first_name, 'where': str(loc).capitalize(), 'when': str(timestamp)}
+            if this_training not in ppl_training:
+                ppl_training.append(this_training)
+            this_training['day'] = str(date.today() + timedelta(days=1)) + ".train"
+            write_file(str(date.today() + timedelta(days=1)) + ".train", ppl_training)
+            write_file("tmp.train", this_training)
+
+
+def training(update, context):
+    ppl_training = open_file(str(date.today()) + ".train")
+    if check_args(update, context, "/training", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
+        user = update.message.from_user
+        loc, timestamp = " ".join(context.args[1:]), context.args[0]
+        try:
+            datetime.strptime(str(timestamp), '%H:%M')
+        except ValueError:
+            message = "Please specify time in the format HH:MM"
+            context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+        else:
+            message = str(user.first_name) + " is training @" + str(loc).capitalize() + ", " + str(timestamp)
+            keyboard = [[InlineKeyboardButton("Join", callback_data=str(user.first_name))]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=reply_markup)
+            this_training = {'who': user.first_name, 'where': str(loc).capitalize(), 'when': str(timestamp)}
+            if this_training not in ppl_training:
+                ppl_training.append(this_training)
+            this_training['day'] = str(date.today()) + ".train"
+            write_file(str(date.today()) + ".train", ppl_training)
+            write_file("tmp.train", this_training)
+
+
+def join(update, context):
+    query = update.callback_query
+    query.answer()
+    user = update.callback_query.from_user
+    if user.first_name != query.data:
+        train = open_file("tmp.train")
+        parent = train['who']
+        message = str(user.first_name) + " joined " + parent + " @" + str(train['where']).capitalize() + ", " + str(train['when'])
+        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+        ppl_training = open_file(train['day'])
+        ppl_training.append({'who': user.first_name, 'where': str(train['where']).capitalize(), 'when': str(train['when'])})
+        write_file(train['day'], ppl_training)
+
 def main():
-    updater = Updater(bot_settings[bot_token])
+    updater = Updater(bot_settings['bot_token'])
     dp = updater.dispatcher
     dp.add_handler(CommandHandler('training', training))
     dp.add_handler(CommandHandler('tomorrowtraining', tomorrowtraining))
+    dp.add_handler(CommandHandler('notomorrowtraining', notomorrowtraining))
     dp.add_handler(CommandHandler('whotraining', whotraining))
     dp.add_handler(CommandHandler('notraining', notraining))
     dp.add_handler(CommandHandler(['help', 'man', 'manual'], help_me))
     dp.add_handler(CommandHandler('vote', vote))
     dp.add_handler(CommandHandler('votes', votes))
     dp.add_handler(CommandHandler('forum', forum))
+    dp.add_handler(CommandHandler('nexttraining', nexttraining))
     dp.add_handler(CommandHandler(['spotmap', 'spots'], spotmap))
+    dp.add_handler(CallbackQueryHandler(join))
     updater.start_polling()
     updater.idle()
 
