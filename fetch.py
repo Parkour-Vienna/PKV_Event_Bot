@@ -4,15 +4,12 @@ from forum import Forum
 import requests
 import logging
 import dateutil.parser as DP
-
-dest = "telegram"
-bot_token, bot_chatID = '1634462832:AAEUuVYbbfQ47VrcximEFkMlBp9HF1a9xog', '-550704351'
+from settings import api_settings, bot_settings, route_settings
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     logging.info('initializing forum connection')
-    f = Forum('http://beta.parkourvienna.at', 'Spotbot',
-              '2d6a1397fafdb361d9f4e3236d14e8cb3c1418de93883cd53cf7ad34ffe932e1')
+    f = Forum(api_settings['forum_url'], api_settings['api_name'], api_settings['api_key'])
     logging.info('testing connectivity')
     f.check_connection()
     
@@ -32,14 +29,14 @@ if __name__ == '__main__':
 
             body = "*" + item['title'] + "* " + tag_txt + "\n\n" + item['excerpt'] + "\n\n" + start_txt + \
                    "http://beta.parkourvienna.at/t/" + item['slug'] + "/" + str(item['id'])
-            send = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + \
+            send = 'https://api.telegram.org/bot' + bot_settings['bot_token'] + '/sendMessage?chat_id=' + bot_settings['bot_chatID'] + \
                    '&parse_mode=markdown' + '&text=' + body
 
-            if dest == "whatsapp":
+            if route_settings['text_dest'] == "whatsapp":
                 logging.info('making transfer file for whatsapp')
                 with open('transfer.tmp', "w") as file:
                     file.write(str(send))
-            elif dest == "telegram":
+            elif route_settings['text_dest'] == "telegram":
                 logging.info('sending message to telegram')
                 requests.get(send)
     else:

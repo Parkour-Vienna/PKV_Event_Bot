@@ -4,12 +4,12 @@ from forum import Forum
 import logging
 import datetime
 from helper import open_file
+from settings import api_settings
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     logging.info('initializing forum connection')
-    f = Forum('http://beta.parkourvienna.at', 'Spotbot',
-              '2d6a1397fafdb361d9f4e3236d14e8cb3c1418de93883cd53cf7ad34ffe932e1')
+    f = Forum(api_settings['forum_url'], api_settings['api_name'], api_settings['api_key'])
     logging.info('testing connectivity')
     f.check_connection()
 

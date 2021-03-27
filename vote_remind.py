@@ -4,10 +4,10 @@ import requests
 import logging
 import datetime
 from helper import open_file
+from settings import bot_settings
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    bot_token, bot_chatID = '1634462832:AAEUuVYbbfQ47VrcximEFkMlBp9HF1a9xog', '-550704351'
     todayday = datetime.datetime.today().weekday()
     message = ""
 
@@ -23,6 +23,6 @@ if __name__ == '__main__':
                   "SPOT]! \n\nThe following people have voted already:\n   " + " ".join([item['who'] for item in votes_fm])
 
     if todayday == 2 or todayday == 6:
-        send = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + \
+        send = 'https://api.telegram.org/bot' + bot_settings['bot_token'] + '/sendMessage?chat_id=' + bot_settings['bot_chatID'] + \
                '&parse_mode=markdown' + '&text=' + message
         requests.get(send)

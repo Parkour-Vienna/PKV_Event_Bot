@@ -5,6 +5,7 @@ import logging
 import operator
 from datetime import datetime, date, timedelta
 from helper import open_file, write_file, check_args
+from settings import bot_settings
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -155,7 +156,7 @@ def forum(update, context):
 
 
 def main():
-    updater = Updater('1634462832:AAEUuVYbbfQ47VrcximEFkMlBp9HF1a9xog')
+    updater = Updater(bot_settings[bot_token])
     dp = updater.dispatcher
     dp.add_handler(CommandHandler('training', training))
     dp.add_handler(CommandHandler('tomorrowtraining', tomorrowtraining))
