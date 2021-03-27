@@ -20,7 +20,7 @@ def write_file(filename, dump):
 def check_args(update, context, name, args_needed, relation, args_given):
     if relation(args_given, len(args_needed)):
         message = "The " + name + " command requires " + str(
-            len(args_needed)) + "arguments \n " + name + " " + " ".join(args_needed)
+            len(args_needed)) + " argument(s) \n " + name + " " + " ".join(args_needed)
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
     else:
         return True
