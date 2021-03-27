@@ -209,6 +209,8 @@ def tomorrowtraining(update, context):
         try:
             if len(str(timestamp)) in [1, 2] and 0 <= int(timestamp) <= 23:
                 timestamp = timestamp.rjust(2, "0") + ":00"
+            if len(str(timestamp)) == 4 and 0 <= int(timestamp[:2]) <= 23 and 0 <= int(timestamp[2:]) <= 59:
+                timestamp = timestamp[:2] + ":" + timestamp[2:]
             datetime.strptime(str(timestamp), '%H:%M')
         except ValueError:
             message = "Please specify time in the format HH:MM"
@@ -227,18 +229,20 @@ def tomorrowtraining(update, context):
 
 
 def training(update, context):
-    if check_args(update, context, "/training", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
+    if check_args(update, context, "/training", ["[LOCATION]"], operator.lt, len(context.args)):
         ppl_training = open_file(str(date.today()) + ".train")
         loc, timestamp = " ".join(context.args[1:]), context.args[0]
         user = update.message.from_user
         try:
             if len(str(timestamp)) in [1, 2] and 0 <= int(timestamp) <= 23:
                 timestamp = timestamp.rjust(2, "0") + ":00"
+            if len(str(timestamp)) == 4 and 0 <= int(timestamp[:2]) <= 23 and 0 <= int(timestamp[2:]) <= 59:
+                timestamp = timestamp[:2] + ":" + timestamp[2:]
             datetime.strptime(str(timestamp), '%H:%M')
         except ValueError:
-            message = "Please specify time in the format HH:MM"
-            context.bot.send_message(chat_id=update.effective_chat.id, text=message)
-        else:
+            timestamp = str(datetime.now().hour).rjust(2, "0") + ":" + str(datetime.now().minute).rjust(2, "0")
+            loc = " ".join(context.args)
+        finally:
             message = str(user.first_name) + " is training @" + str(loc).capitalize() + ", " + str(timestamp)
             keyboard = [[InlineKeyboardButton("Join", callback_data=str(user.first_name))]]
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -271,10 +275,10 @@ def main():
     updater = Updater(bot_settings['bot_token'])
     dp = updater.dispatcher
     dp.add_handler(CommandHandler(['training', 'train'], training))
-    dp.add_handler(CommandHandler(['tomorrowtraining', 'ttraining', '+training'], tomorrowtraining))
-    dp.add_handler(CommandHandler(['notomorrowtraining', 'nottraining', '-tomorrowtraining', '-ttraining'], notomorrowtraining))
-    dp.add_handler(CommandHandler(['whotraining', '?training', '?train'], whotraining))
-    dp.add_handler(CommandHandler(['notraining', '-training', '-train'], notraining))
+    dp.add_handler(CommandHandler(['tomorrowtraining', 'ttraining'], tomorrowtraining))
+    dp.add_handler(CommandHandler(['notomorrowtraining', 'nottraining'], notomorrowtraining))
+    dp.add_handler(CommandHandler(['whotraining'], whotraining))
+    dp.add_handler(CommandHandler(['notraining'], notraining))
     dp.add_handler(CommandHandler(['help', 'man', 'manual'], help_me))
     dp.add_handler(CommandHandler('vote', vote))
     dp.add_handler(CommandHandler('votes', votes))
