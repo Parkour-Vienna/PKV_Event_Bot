@@ -29,6 +29,7 @@ def training(update, context):
             write_file(str(date.today()) + ".train", ppl_training)
 '''
 
+
 def whotraining(update, context):
     if check_args(update, context, "/whotraining", ["[DAY]"], operator.gt, len(context.args)):
         if len(context.args) == 0 or str(context.args[0]).lower() == "today":
@@ -200,13 +201,14 @@ def forum(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
-
 def tomorrowtraining(update, context):
     if check_args(update, context, "/tomorrowtraining", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
         ppl_training = open_file(str(date.today() + timedelta(days=1)) + ".train")
         loc, timestamp = " ".join(context.args[1:]), context.args[0]
         user = update.message.from_user
         try:
+            if len(str(timestamp)) in [1, 2] and 0 <= int(timestamp) <= 23:
+                timestamp = timestamp.rjust(2, "0") + ":00"
             datetime.strptime(str(timestamp), '%H:%M')
         except ValueError:
             message = "Please specify time in the format HH:MM"
@@ -225,11 +227,13 @@ def tomorrowtraining(update, context):
 
 
 def training(update, context):
-    ppl_training = open_file(str(date.today()) + ".train")
     if check_args(update, context, "/training", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
-        user = update.message.from_user
+        ppl_training = open_file(str(date.today()) + ".train")
         loc, timestamp = " ".join(context.args[1:]), context.args[0]
+        user = update.message.from_user
         try:
+            if len(str(timestamp)) in [1, 2] and 0 <= int(timestamp) <= 23:
+                timestamp = timestamp.rjust(2, "0") + ":00"
             datetime.strptime(str(timestamp), '%H:%M')
         except ValueError:
             message = "Please specify time in the format HH:MM"
@@ -254,20 +258,23 @@ def join(update, context):
     if user.first_name != query.data:
         train = open_file("tmp.train")
         parent = train['who']
-        message = str(user.first_name) + " joined " + parent + " @" + str(train['where']).capitalize() + ", " + str(train['when'])
+        message = str(user.first_name) + " joined " + parent + " @" + str(train['where']).capitalize() + ", " + str(
+            train['when'])
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
         ppl_training = open_file(train['day'])
-        ppl_training.append({'who': user.first_name, 'where': str(train['where']).capitalize(), 'when': str(train['when'])})
+        ppl_training.append(
+            {'who': user.first_name, 'where': str(train['where']).capitalize(), 'when': str(train['when'])})
         write_file(train['day'], ppl_training)
+
 
 def main():
     updater = Updater(bot_settings['bot_token'])
     dp = updater.dispatcher
-    dp.add_handler(CommandHandler('training', training))
-    dp.add_handler(CommandHandler('tomorrowtraining', tomorrowtraining))
-    dp.add_handler(CommandHandler('notomorrowtraining', notomorrowtraining))
-    dp.add_handler(CommandHandler('whotraining', whotraining))
-    dp.add_handler(CommandHandler('notraining', notraining))
+    dp.add_handler(CommandHandler(['training', 'train'], training))
+    dp.add_handler(CommandHandler(['tomorrowtraining', 'ttraining', '+training'], tomorrowtraining))
+    dp.add_handler(CommandHandler(['notomorrowtraining', 'nottraining', '-tomorrowtraining', '-ttraining'], notomorrowtraining))
+    dp.add_handler(CommandHandler(['whotraining', '?training', '?train'], whotraining))
+    dp.add_handler(CommandHandler(['notraining', '-training', '-train'], notraining))
     dp.add_handler(CommandHandler(['help', 'man', 'manual'], help_me))
     dp.add_handler(CommandHandler('vote', vote))
     dp.add_handler(CommandHandler('votes', votes))
