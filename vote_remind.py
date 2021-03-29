@@ -23,6 +23,7 @@ if __name__ == '__main__':
                   "SPOT]! \n\nThe following people have voted already:\n   " + " ".join([item['who'] for item in votes_fm])
 
     if todayday == 2 or todayday == 6:
-        send = 'https://api.telegram.org/bot' + bot_settings['bot_token'] + '/sendMessage?chat_id=' + bot_settings['bot_chatID'] + \
-               '&parse_mode=markdown' + '&text=' + message
-        requests.get(send)
+        for group in bot_settings['bot_chatID']:
+            send = 'https://api.telegram.org/bot' + bot_settings['bot_token'] + '/sendMessage?chat_id=' + group + \
+                   '&parse_mode=markdown' + '&text=' + message
+            requests.get(send)

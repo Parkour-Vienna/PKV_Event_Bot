@@ -36,8 +36,8 @@ def timestring(hour, minute):
 
 
 def parse_time(timestamp):
-    if len(str(timestamp)) in [1, 2] and 0 <= int(timestamp) <= 23:
+    if timestamp.isnumeric() and len(str(timestamp)) in [1, 2] and 0 <= int(timestamp) <= 23:
         timestamp = f"{timestamp.rjust(2, '0')}:00"
-    if len(str(timestamp)) == 4 and 0 <= int(timestamp[:2]) <= 23 and 0 <= int(timestamp[2:]) <= 59:
+    if timestamp.isnumeric() and len(str(timestamp)) == 4 and 0 <= int(timestamp[:2]) <= 23 and 0 <= int(timestamp[2:]) <= 59:
         timestamp = f"{timestamp[:2]}:{timestamp[2:]}"
     return timestamp

@@ -1,3 +1,5 @@
+from helper import open_file
+
 api_settings = {
     'forum_url': 'http://beta.parkourvienna.at',
     'api_name': 'Spotbot',
@@ -6,7 +8,7 @@ api_settings = {
 
 bot_settings = {
     'bot_token': '1634462832:AAEUuVYbbfQ47VrcximEFkMlBp9HF1a9xog',
-    'bot_chatID': '-550704351'
+    'bot_chatID': open_file("groups.list")
 }
 
 route_settings = {
