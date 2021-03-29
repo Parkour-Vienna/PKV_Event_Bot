@@ -10,10 +10,11 @@ import gen_message
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
+
 def whotraining(update, context):
     logging.info('whotraining command called')
-    if check_args(update, context, "/whotraining", ["[DAY]"], operator.gt, len(context.args)):
-        message = gen_message.gen_whotraining(context.args)
+    message = gen_message.gen_whotraining()
+    if message:
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
@@ -23,7 +24,7 @@ def notraining(update, context):
     message = ""
     if len(context.args) == 0:
         message = gen_message.gen_notraining_0(user.first_name)
-    elif check_args(update, context, "/notraining", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
+    elif check_args(update, context, "/notraining", ["TIME", "LOCATION"], operator.lt, len(context.args)):
         message = gen_message.gen_notraining(user.first_name, context.args)
     if message:
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
@@ -31,63 +32,86 @@ def notraining(update, context):
 
 def notomorrowtraining(update, context):
     logging.info('notomorrowtraining command called')
-    if check_args(update, context, "/notomorrowtraining", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
-        user = update.message.from_user
-        message = gen_message.gen_notomorrowtraining(user.first_name, context.args)
+    user = update.message.from_user
+    message = ""
+    if len(context.args) == 0:
+        message = gen_message.gen_notraining_0(user.first_name,
+                                               day=f"{date.today() + timedelta(days=1)}.train", daystring=" tomorrow")
+    elif check_args(update, context, "/notomorrowtraining", ["TIME", "LOCATION"], operator.lt, len(context.args)):
+        message = gen_message.gen_notraining(user.first_name, context.args,
+                                             day=f"{date.today() + timedelta(days=1)}.train", daystring="tomorrow ")
+    if message:
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 def help_me(update, context):
     logging.info('help command called')
     message = gen_message.gen_help()
-    context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    if message:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 def nexttraining(update, context):
     logging.info('nexttraining command called')
-    if check_args(update, context, "/nexttraining", [], operator.ne, len(context.args)):
-        message = gen_message.gen_nexttraining()
+    message = gen_message.gen_nexttraining()
+    if message:
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 def vote(update, context):
     logging.info('vote command called')
-    if check_args(update, context, "/vote", ["[EVENT]", "[LOCATION]"], operator.lt, len(context.args)):
+    if check_args(update, context, "/vote", ["EVENT", "LOCATION"], operator.lt, len(context.args)):
         user = update.message.from_user
         message = gen_message.gen_vote(user.first_name, context.args)
+        if message:
+            context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+
+
+def rm_vote(update, context):
+    logging.info('removevote command called')
+    user = update.message.from_user
+    message = ""
+    if len(context.args) == 0:
+        message = gen_message.gen_rm_vote_0(user.first_name)
+    elif check_args(update, context, "/removevote", ["EVENT"], operator.lt, len(context.args)):
+        message = gen_message.gen_rm_vote(user.first_name, context.args)
+    if message:
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 def votes(update, context):
     logging.info('votes command called')
-    if check_args(update, context, "/votes", [], operator.gt, len(context.args)):
-        message = gen_message.gen_votes()
+    message = gen_message.gen_votes()
+    if message:
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 def spotmap(update, context):
     logging.info('spot command called')
-    if check_args(update, context, "/spotmap", [], operator.ne, len(context.args)):
-        message = gen_message.gen_spotmap()
+    message = gen_message.gen_spotmap()
+    if message:
         context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 def forum(update, context):
     logging.info('forum command called')
     message = gen_message.gen_forum(context.args)
-    context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+    if message:
+        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 def tomorrowtraining(update, context):
     logging.info('tomorrowtraining command called')
-    if check_args(update, context, "/tomorrowtraining", ["[TIME]", "[LOCATION]"], operator.lt, len(context.args)):
+    if check_args(update, context, "/tomorrowtraining", ["TIME", "LOCATION"], operator.lt, len(context.args)):
         user = update.message.from_user
         reply_markup = None
-        message = gen_message.gen_training(user.first_name, context.args, day=str(date.today() + timedelta(days=1)) + ".train", daystring="tomorrow ")
+        message = gen_message.gen_training(user.first_name, context.args,
+                                           day=f"{date.today() + timedelta(days=1)}.train", daystring="tomorrow ")
         if message != "Please specify time in the format HH:MM":
             keyboard = [[InlineKeyboardButton("Join", callback_data=str(user.first_name))]]
             reply_markup = InlineKeyboardMarkup(keyboard)
-        context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=reply_markup)
+        if message:
+            context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=reply_markup)
 
 
 def training(update, context):
@@ -97,7 +121,8 @@ def training(update, context):
         message = gen_message.gen_training(user.first_name, context.args)
         keyboard = [[InlineKeyboardButton("Join", callback_data=str(user.first_name))]]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=reply_markup)
+        if message:
+            context.bot.send_message(chat_id=update.effective_chat.id, text=message, reply_markup=reply_markup)
 
 
 def join(update, context):
@@ -107,7 +132,8 @@ def join(update, context):
     user = update.callback_query.from_user
     if user.first_name != query.data:
         message = gen_message.gen_join(user.first_name)
-        context.bot.send_message(chat_id=update.effective_chat.id, text=message)
+        if message:
+            context.bot.send_message(chat_id=update.effective_chat.id, text=message)
 
 
 def main():
@@ -122,6 +148,7 @@ def main():
     dp.add_handler(CommandHandler(['notraining'], notraining))
     dp.add_handler(CommandHandler(['help', 'man', 'manual'], help_me))
     dp.add_handler(CommandHandler('vote', vote))
+    dp.add_handler(CommandHandler(['removevote', 'rvote', 'rmvote', 'novote', 'deletevote', 'delvote'], rm_vote))
     dp.add_handler(CommandHandler('votes', votes))
     dp.add_handler(CommandHandler('forum', forum))
     dp.add_handler(CommandHandler('nexttraining', nexttraining))
