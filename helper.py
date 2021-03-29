@@ -5,7 +5,7 @@ import operator
 
 def open_file(filename):
     try:
-        with open("data/" + filename, "r") as file:
+        with open("data/" + filename, "r", encoding='utf8') as file:
             result = json.load(file)
     except FileNotFoundError:
         result = []
@@ -13,8 +13,8 @@ def open_file(filename):
 
 
 def write_file(filename, dump):
-    with open("data/" + filename, "w+") as file:
-        json.dump(dump, file)
+    with open("data/" + filename, "w+", encoding='utf8') as file:
+        json.dump(dump, file, ensure_ascii=False)
 
 
 def check_args(update, context, name, args_needed, relation, args_given):
@@ -29,3 +29,15 @@ def check_args(update, context, name, args_needed, relation, args_given):
 def rec_get(name, keys):
     head, *tail = keys
     return rec_get(name.get(head, {}), tail) if tail else name.get(head, "")
+
+
+def timestring(hour, minute):
+    return f"{str(hour).rjust(2, '0')}:{str(minute).rjust(2, '0')}"
+
+
+def parse_time(timestamp):
+    if len(str(timestamp)) in [1, 2] and 0 <= int(timestamp) <= 23:
+        timestamp = f"{timestamp.rjust(2, '0')}:00"
+    if len(str(timestamp)) == 4 and 0 <= int(timestamp[:2]) <= 23 and 0 <= int(timestamp[2:]) <= 59:
+        timestamp = f"{timestamp[:2]}:{timestamp[2:]}"
+    return timestamp
